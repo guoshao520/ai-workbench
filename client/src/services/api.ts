@@ -1,10 +1,7 @@
-// API请求封装
-
-import { Message, ChatRequest, SessionSummary, RequestOptions } from '../types'
+import { Message, RequestOptions } from '../types'
 
 const API_BASE = '/api'
 
-// 生成唯一ID
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2)
 }
@@ -44,17 +41,38 @@ export async function* streamChat(
       const { done, value } = await reader.read()
       if (done) break
 
+      // stream: true 确保多字节字符不会被截断
       buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
 
+      // 按 \n\n 分割 SSE 事件
+      const events = buffer.split('\n\n')
+      // 最后一段可能不完整，留在 buffer 里
+      buffer = events.pop() || ''
+
+      for (const event of events) {
+        const lines = event.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') {
+              return
+            }
+            // 后端直接发原始文本，不需要 JSON 解析
+            yield data
+          }
+        }
+      }
+    }
+
+    // 处理 buffer 里剩余的内容
+    if (buffer.trim()) {
+      const lines = buffer.split('\n')
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           const data = line.slice(6)
-          if (data === '[DONE]') {
-            return
+          if (data !== '[DONE]') {
+            yield data
           }
-          yield data
         }
       }
     }

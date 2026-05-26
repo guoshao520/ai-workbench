@@ -72,7 +72,8 @@ export class ChatController {
         messages,
         role,
         (chunk: string) => {
-          res.write(`data: ${chunk}\n\n`);
+          const escaped = chunk.replace(/\n/g, '\u001F')
+          res.write(`data: ${escaped}\n\n`)
         },
       );
 

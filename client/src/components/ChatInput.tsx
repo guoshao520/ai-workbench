@@ -1,24 +1,34 @@
-// 输入框组件
-
-import React, { useState, useRef, useCallback, KeyboardEvent } from 'react'
+import React, { useState, useRef, useCallback, KeyboardEvent, useEffect } from 'react'
 
 interface ChatInputProps {
   onSend: (message: string) => void
   onCancel?: () => void
   isLoading?: boolean
   disabled?: boolean
+  pendingPrompt?: string | null
+  onPromptConsumed?: () => void
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   onCancel,
   isLoading = false,
-  disabled = false
+  disabled = false,
+  pendingPrompt,
+  onPromptConsumed
 }) => {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // 自动调整高度
+  // 收到 prompt 时填入输入框
+  useEffect(() => {
+    if (pendingPrompt) {
+      setInput(pendingPrompt)
+      onPromptConsumed?.()
+      textareaRef.current?.focus()
+    }
+  }, [pendingPrompt, onPromptConsumed])
+
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current
     if (textarea) {
@@ -27,7 +37,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [])
 
-  // 发送消息
   const handleSend = useCallback(() => {
     if (input.trim() && !isLoading && !disabled) {
       onSend(input)
@@ -38,7 +47,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [input, isLoading, disabled, onSend])
 
-  // 键盘事件
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -46,7 +54,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [handleSend])
 
-  // 输入事件
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
     adjustHeight()
@@ -61,21 +68,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           value={input}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="输入消息... (Shift+Enter 换行, Enter 发送)"
+          placeholder="输入消息，Enter 发送，Shift+Enter 换行..."
           disabled={disabled || isLoading}
-          rows={1}
+          rows={8}
         />
         <div className="chat-input-actions">
           {isLoading ? (
-            <button 
-              className="cancel-btn"
-              onClick={onCancel}
-              title="取消"
-            >
-              ⏹️
+            <button className="cancel-btn" onClick={onCancel} title="取消">
+              ⏹
             </button>
           ) : (
-            <button 
+            <button
               className="send-btn"
               onClick={handleSend}
               disabled={!input.trim() || disabled}
@@ -85,9 +88,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </button>
           )}
         </div>
-      </div>
-      <div className="input-hint">
-        <span>按 Enter 发送，Shift + Enter 换行</span>
       </div>
     </div>
   )

@@ -1,6 +1,29 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
+import xml from 'highlight.js/lib/languages/xml'
+import javascript from 'highlight.js/lib/languages/javascript'
+import typescript from 'highlight.js/lib/languages/typescript'
+import css from 'highlight.js/lib/languages/css'
+import scss from 'highlight.js/lib/languages/scss'
+import json from 'highlight.js/lib/languages/json'
+import bash from 'highlight.js/lib/languages/bash'
+import python from 'highlight.js/lib/languages/python'
+
+hljs.registerLanguage('vue', xml)
+hljs.registerLanguage('html', xml)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('js', javascript)
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('ts', typescript)
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('scss', scss)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('shell', bash)
+hljs.registerLanguage('python', python)
+
 import 'highlight.js/styles/github-dark.css'
 import { Message } from '../types'
 
@@ -10,60 +33,50 @@ interface ChatMessageProps {
 }
 
 const md = new MarkdownIt({
-  html: true,
+  html: false,
   linkify: true,
   typographer: true,
   breaks: true,
 })
 
-// 基础语法修复：补全行尾分号（简单处理）
-const quickFixCode = (code: string, language: string): string => {
-  // 只对 JS/TS/CSS 这类需要分号的语言做基础修复
-  const semicolonLangs = ['javascript', 'js', 'typescript', 'ts', 'css', 'scss', 'less']
-  if (!semicolonLangs.includes(language)) return code
-
-  // 简单处理：给不以 } { , : ; 结尾的非空行，尝试补分号
-  return code.split('\n').map(line => {
-    const trimmed = line.trim()
-    if (!trimmed) return line
-    if (trimmed.endsWith(';') || trimmed.endsWith('{') || trimmed.endsWith('}') || trimmed.endsWith(',')) {
-      return line
-    }
-    // 行尾加个分号（仅对非注释行生效，粗暴但安全）
-    if (!trimmed.startsWith('//') && !trimmed.startsWith('/*') && !trimmed.endsWith('*/')) {
-      return line + ';'
-    }
-    return line
-  }).join('\n')
+const escapeHtml = (str: string): string => {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
-const CodeBlock: React.FC<{ code: string; language: string }> = ({ code, language }) => {
+const CodeBlock: React.FC<{
+  code: string
+  language: string
+  isStreamingCode?: boolean
+}> = ({ code, language, isStreamingCode }) => {
   const [copied, setCopied] = useState(false)
-
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // 流式时只做一次最终高亮：内容不变就不重算
   const highlightedCode = useMemo(() => {
     if (!code) return ''
+    if (isStreamingCode) {
+      return escapeHtml(code)
+    }
     try {
-      // 1. 先做基础语法修复
-      const fixedCode = quickFixCode(code, language)
-      // 2. 找不到语言自动降级为 plaintext
       const validLang = hljs.getLanguage(language) ? language : 'plaintext'
-      // 3. 高亮失败时降级为纯文本（不抛错）
       try {
-        return hljs.highlight(fixedCode, { language: validLang }).value
+        return hljs.highlight(code, { language: validLang }).value
       } catch {
-        return hljs.highlight(fixedCode, { language: 'plaintext' }).value
+        return hljs.highlight(code, { language: 'plaintext' }).value
       }
     } catch {
-      // 终极兜底：就算全崩了也不挂页面，直接输出原始文本
-      return hljs.escape(code)
+      return escapeHtml(code)
     }
-  }, [code, language])
+  }, [code, language, isStreamingCode])
 
   return (
     <div className="code-block-container">
@@ -80,9 +93,15 @@ const CodeBlock: React.FC<{ code: string; language: string }> = ({ code, languag
   )
 }
 
-const parseContent = (content: string) => {
+const parseContent = (content: string, isStreaming: boolean) => {
   const realContent = content.replace(/\u001F/g, '\n')
-  const parts: any[] = []
+  const parts: Array<{
+    type: 'text' | 'code'
+    html?: string
+    code?: string
+    language?: string
+    streaming?: boolean
+  }> = []
 
   let text = ''
   let codeBlockStarted = false
@@ -107,6 +126,7 @@ const parseContent = (content: string) => {
           type: 'code',
           code: codeContent,
           language: codeLang,
+          streaming: false,
         })
         codeContent = ''
       }
@@ -122,6 +142,7 @@ const parseContent = (content: string) => {
       type: 'code',
       code: codeContent,
       language: codeLang,
+      streaming: isStreaming,
     })
   } else if (text) {
     parts.push({ type: 'text', html: md.render(text) })
@@ -131,35 +152,26 @@ const parseContent = (content: string) => {
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming = false }) => {
-  const [displayedContent, setDisplayedContent] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const target = message.content || ''
-    if (!isStreaming) {
-      setDisplayedContent(target)
-      return
-    }
-
-    const interval = setInterval(() => {
-      setDisplayedContent((prev) => {
-        if (prev.length >= target.length) {
-          clearInterval(interval)
-          return prev
-        }
-        return target.slice(0, prev.length + 1)
-      })
-    }, 16)
-
-    return () => clearInterval(interval)
-  }, [message.content, isStreaming])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [displayedContent])
-
-  const parts = useMemo(() => parseContent(displayedContent), [displayedContent])
+  // 直接用 message.content，SSE 流式本身就是逐步的
+  const content = message.content || ''
+  const parts = useMemo(() => parseContent(content, isStreaming), [content, isStreaming])
   const isUser = message.role === 'user'
+
+  // 滚动到底部 - 节流
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
+    scrollTimerRef.current = setTimeout(() => {
+      scrollTimerRef.current = null
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 200)
+
+    return () => {
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
+    }
+  }, [content])
 
   return (
     <div className={`message ${isUser ? 'user-message' : 'assistant-message'}`}>
@@ -170,9 +182,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming =
         <div className="message-bubble">
           {parts.map((item, idx) =>
             item.type === 'text' ? (
-              <div key={idx} dangerouslySetInnerHTML={{ __html: item.html }} />
+              <span key={idx} dangerouslySetInnerHTML={{ __html: item.html }} />
             ) : (
-              <CodeBlock key={idx} code={item.code} language={item.language} />
+              <CodeBlock
+                key={idx}
+                code={item.code || ''}
+                language={item.language || 'plaintext'}
+                isStreamingCode={item.streaming}
+              />
             )
           )}
           {isStreaming && <span className="typing-cursor">▊</span>}

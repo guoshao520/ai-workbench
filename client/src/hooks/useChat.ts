@@ -43,6 +43,7 @@ export function useChat() {
       content: '',
       timestamp: Date.now()
     }
+
     setMessages(prev => [...prev, assistantMessage])
     callbacksRef.current?.addMessage(assistantMessage)
 
@@ -52,9 +53,10 @@ export function useChat() {
 
     try {
       const historyMessages = callbacksRef.current?.getHistory() || []
+      const fullMessages = [...historyMessages.slice(-3), userMessage]
       let fullContent = ''
 
-      for await (const chunk of streamChat([...historyMessages, userMessage], {
+      for await (const chunk of streamChat(fullMessages, {
         role: options?.role,
         template: options?.template,
       })) {

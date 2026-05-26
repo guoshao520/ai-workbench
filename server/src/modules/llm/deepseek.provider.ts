@@ -46,7 +46,7 @@ export class DeepSeekProvider implements LLMProvider {
       const response = await this.httpClient.post('/chat/completions', {
         model: options?.model || this.defaultModel,
         messages: fullMessages,
-        temperature: options?.temperature ?? 0.7,
+        temperature: options?.temperature ?? 0.1,
         max_tokens: options?.max_tokens ?? 8192,
         stream: false,
       });
@@ -80,7 +80,7 @@ export class DeepSeekProvider implements LLMProvider {
         {
           model: options?.model || this.defaultModel,
           messages: fullMessages,
-          temperature: options?.temperature ?? 0.7,
+          temperature: options?.temperature ?? 0.1,
           max_tokens: options?.max_tokens ?? 8192,
           stream: true,
         },
@@ -107,7 +107,7 @@ export class DeepSeekProvider implements LLMProvider {
                 const parsed = JSON.parse(data);
                 const delta = parsed.choices?.[0]?.delta?.content || '';
                 if (delta) {
-                  onChunk({ delta: delta.replace(/\n/g, '\u001F'), done: false });
+                  onChunk({ delta, done: false });
                 }
               } catch (e) {
                 // 忽略解析错误
