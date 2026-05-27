@@ -2,7 +2,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SessionService } from '../session/session.service';
 import { AgentService } from '../agent/agent.service';
-import { fixAICode, fixByAST } from '../../utils/code-fixer';
 import { ChatOptions } from '../llm/llm.types';
 
 // 消息类型
@@ -25,7 +24,7 @@ export class ChatService {
    */
   async handleStreamChat(
     sessionId: string,
-    messages: Message[],    // 接收完整消息历史
+    messages: Message[],
     role?: string,
     onChunk?: (chunk: string) => void,
     options?: ChatOptions
@@ -42,7 +41,6 @@ export class ChatService {
     // 1. 同步历史消息到会话（过滤掉 system 消息，避免重复添加）
     for (const msg of messages) {
       if (msg.role !== 'system') {
-        // 检查是否已存在，避免重复
         const exists = activeSession.messages.some(
           m => m.content === msg.content && m.role === msg.role
         );
@@ -66,52 +64,32 @@ export class ChatService {
       role: 'assistant',
       content: '',
     });
-
     if (!assistantMessage) {
       throw new Error('Failed to create assistant message');
     }
 
     let fullContent = '';
 
+    // 4. 调用 Agent 处理（带 options）
     await this.agentService.processMessage(
       sessionId,
       lastUserMessage.content,
       role,
       (chunk: string) => {
         fullContent += chunk;
-
-        // 实时发送原始 chunk，前端能正常渲染
         onChunk?.(chunk);
       },
       options
     );
 
-    // 流结束后，加判断再调用 AST 修复
-    let fixedContent = fullContent;
-
-    // 只有非 Vue 代码才调用 fixByAST
-    const isVueCode = 
-      fullContent.includes('<template>') || 
-      fullContent.includes('```vue') ||
-      fullContent.includes('<script setup>');
-
-    if (!isVueCode) {
-      try {
-        fixedContent = fixByAST(fullContent);
-      } catch (e) {
-        console.error('AST 修复失败，使用原内容:', e);
-        fixedContent = fullContent;
-      }
-    }
-
-    // 只在结束后更新一次数据库
+    // 5. 流结束后直接更新数据库
     this.sessionService.updateAssistantMessage(
       sessionId,
       assistantMessage.id,
-      fixedContent
+      fullContent
     );
 
-    return fixedContent;
+    return fullContent;
   }
 
   /**
