@@ -11,16 +11,17 @@ import {
 } from './llm.types';
 
 @Injectable()
-export class DeepSeekProvider implements LLMProvider {
+export class Provider implements LLMProvider {
   private readonly logger = new Logger();
   private readonly httpClient: AxiosInstance;
   private readonly defaultModel: string;
 
   constructor(private readonly configService: ConfigService) {
+    const models = this.configService.get<any[]>('models') || [];
     const apiKey = this.configService.get<string>('llm.apiKey');
     const baseUrl = this.configService.get<string>('llm.baseUrl');
-    this.defaultModel = this.configService.get<string>('llm.model') || 'deepseek-chat';
 
+    this.defaultModel = models[0]?.model;
     this.httpClient = axios.create({
       baseURL: baseUrl,
       headers: {
@@ -57,7 +58,7 @@ export class DeepSeekProvider implements LLMProvider {
         usage: data.usage,
       };
     } catch (error) {
-      this.logger.error('DeepSeek chat error', error.stack, 'DeepSeekProvider');
+      this.logger.error('DeepSeek chat error', error.stack, 'Provider');
       throw error;
     }
   }
@@ -117,7 +118,7 @@ export class DeepSeekProvider implements LLMProvider {
         });
 
         response.data.on('error', (error: Error) => {
-          this.logger.error('Stream error', error.stack, 'DeepSeekProvider');
+          this.logger.error('Stream error', error.stack, 'Provider');
           reject(error);
         });
 
@@ -126,7 +127,7 @@ export class DeepSeekProvider implements LLMProvider {
         });
       });
     } catch (error) {
-      this.logger.error('DeepSeek stream error', error.stack, 'DeepSeekProvider');
+      this.logger.error('DeepSeek stream error', error.stack, 'Provider');
       throw error;
     }
   }

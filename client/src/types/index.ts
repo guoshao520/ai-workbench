@@ -4,7 +4,8 @@ export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
-  timestamp: number
+  timestamp: number,
+  model?: string
 }
 
 export interface Session {
@@ -46,5 +47,6 @@ export interface Tool {
 export interface RequestOptions {
   role?: string
   template?: string
-  sessionId?: string
+  sessionId?: string,
+  model?: string
 }

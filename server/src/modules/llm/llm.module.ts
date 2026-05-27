@@ -1,11 +1,11 @@
 // LLM模块
 import { Module, Global } from '@nestjs/common';
 import { LlmService } from './llm.service';
-import { DeepSeekProvider } from './deepseek.provider';
+import { Provider } from './provider';
 
 @Global()
 @Module({
-  providers: [LlmService, DeepSeekProvider],
+  providers: [LlmService, Provider],
   exports: [LlmService],
 })
 export class LlmModule {}

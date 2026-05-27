@@ -1,13 +1,13 @@
 // LLM服务 - 提供统一的LLM调用接口
 import { Injectable, Logger } from '@nestjs/common';
-import { DeepSeekProvider } from './deepseek.provider';
+import { Provider } from './provider';
 import { Message, ChatOptions, ChatResponse, StreamChunk } from './llm.types';
 
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger();
 
-  constructor(private readonly deepseekProvider: DeepSeekProvider) {}
+  constructor(private readonly Provider: Provider) {}
 
   /**
    * 发送聊天请求
@@ -21,9 +21,9 @@ export class LlmService {
 
     switch (provider) {
       case 'deepseek':
-        return this.deepseekProvider.chat(messages, options);
+        return this.Provider.chat(messages, options);
       default:
-        return this.deepseekProvider.chat(messages, options);
+        return this.Provider.chat(messages, options);
     }
   }
 
@@ -40,9 +40,9 @@ export class LlmService {
 
     switch (provider) {
       case 'deepseek':
-        return this.deepseekProvider.streamChat(messages, onChunk, options);
+        return this.Provider.streamChat(messages, onChunk, options);
       default:
-        return this.deepseekProvider.streamChat(messages, onChunk, options);
+        return this.Provider.streamChat(messages, onChunk, options);
     }
   }
 }

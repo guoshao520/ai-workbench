@@ -2,6 +2,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SessionService } from '../session/session.service';
 import { AgentService } from '../agent/agent.service';
+import { fixAICode, fixByAST } from '../../utils/code-fixer';
+import { ChatOptions } from '../llm/llm.types';
 
 // 消息类型
 interface Message {
@@ -26,6 +28,7 @@ export class ChatService {
     messages: Message[],    // 接收完整消息历史
     role?: string,
     onChunk?: (chunk: string) => void,
+    options?: ChatOptions
   ): Promise<string> {
     this.logger.log(`Handling stream chat for session ${sessionId}`, 'ChatService');
 
@@ -68,27 +71,47 @@ export class ChatService {
       throw new Error('Failed to create assistant message');
     }
 
-    // 4. 调用 Agent 处理
     let fullContent = '';
-    
+
     await this.agentService.processMessage(
       sessionId,
-      lastUserMessage.content,    // 只传最后一条用户消息
+      lastUserMessage.content,
       role,
       (chunk: string) => {
         fullContent += chunk;
-        // 更新助手消息
-        this.sessionService.updateAssistantMessage(
-          sessionId,
-          assistantMessage.id,
-          fullContent,
-        );
-        // 发送 chunk
+
+        // 实时发送原始 chunk，前端能正常渲染
         onChunk?.(chunk);
       },
+      options
     );
 
-    return fullContent;
+    // 流结束后，加判断再调用 AST 修复
+    let fixedContent = fullContent;
+
+    // 只有非 Vue 代码才调用 fixByAST
+    const isVueCode = 
+      fullContent.includes('<template>') || 
+      fullContent.includes('```vue') ||
+      fullContent.includes('<script setup>');
+
+    if (!isVueCode) {
+      try {
+        fixedContent = fixByAST(fullContent);
+      } catch (e) {
+        console.error('AST 修复失败，使用原内容:', e);
+        fixedContent = fullContent;
+      }
+    }
+
+    // 只在结束后更新一次数据库
+    this.sessionService.updateAssistantMessage(
+      sessionId,
+      assistantMessage.id,
+      fixedContent
+    );
+
+    return fixedContent;
   }
 
   /**

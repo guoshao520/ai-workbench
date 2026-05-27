@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { Message } from '../types'
 import { streamChat, generateId } from '../services/api'
+import { getLastSelectedModel } from '../utils/storage'
 
 interface SessionCallbacks {
   addMessage: (message: Message) => void
@@ -23,8 +24,10 @@ export function useChat() {
   // 发送消息
   const sendMessage = useCallback(async (
     content: string,
-    options?: { role?: string; template?: string }
+    options?: { role?: string; template?: string, model?: string }
   ) => {
+    const modelType = getLastSelectedModel()
+
     if (!content.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -59,6 +62,7 @@ export function useChat() {
       for await (const chunk of streamChat(fullMessages, {
         role: options?.role,
         template: options?.template,
+        model: modelType
       })) {
         fullContent += chunk
         setMessages(prev => prev.map(msg =>

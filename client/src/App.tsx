@@ -46,13 +46,26 @@ function App() {
       createSession()
       await new Promise(r => setTimeout(r, 0))
     }
-    await sendMessage(content)
+    const chatConfig = {
+      model: 'deepseek-chat',
+      temperature: 0.7,
+      maxTokens: 4096,
+    }
+
+    await sendMessage(content, chatConfig)
   }
 
-  const handleNewChat = () => createSession()
-  const handleSelectSession = (id: string) => switchSession(id)
-  const handleDeleteSession = (id: string) => deleteSession(id)
-  const handleRenameSession = (id: string, title: string) => renameSession(id, title)
+  const withCancel = <T extends (...args: any[]) => any>(fn: T) => {
+    return (...args: Parameters<T>): ReturnType<T> => {
+      cancelRequest();
+      return fn(...args);
+    };
+  };
+
+  const handleNewChat = withCancel(createSession);
+  const handleSelectSession = withCancel(switchSession);
+  const handleDeleteSession = withCancel(deleteSession);
+  const handleRenameSession = withCancel(renameSession);
 
   const handlePromptInsert = (template: string) => {
     pendingPromptRef.current = template

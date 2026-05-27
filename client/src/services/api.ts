@@ -20,7 +20,8 @@ export async function* streamChat(
       messages,
       role: options?.role,
       template: options?.template,
-      sessionId: options?.sessionId
+      sessionId: options?.sessionId,
+      model: options?.model,
     })
   })
 

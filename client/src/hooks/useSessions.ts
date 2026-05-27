@@ -35,7 +35,6 @@ export function useSessions() {
 
   // 保存会话到本地
   const persistSessions = useCallback((newSessions: Session[]) => {
-    console.log("保存会话", newSessions)
     setSessions(newSessions)
     saveSessions(newSessions)
   }, [])

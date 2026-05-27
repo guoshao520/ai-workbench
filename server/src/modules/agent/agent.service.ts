@@ -7,7 +7,7 @@ import { SessionService } from '../session/session.service';
 import { RoleManagerService } from '../prompt/role-manager.service';
 import { TaskRouterService, RouteDecision } from './task-router.service';
 import { Message } from '../session/entities/session.entity';
-import { StreamChunk } from '../llm/llm.types';
+import { StreamChunk, ChatOptions } from '../llm/llm.types';
 import { Logger } from '../../utils/logger';
 
 @Injectable()
@@ -37,6 +37,7 @@ export class AgentService {
     userMessage: string,
     role?: string,
     onChunk?: (chunk: string) => void,
+    options?: ChatOptions
   ): Promise<string> {
     this.logger.log(`Processing message for session ${sessionId}`, 'AgentService');
 
@@ -52,7 +53,7 @@ export class AgentService {
 
     if (decision.type === 'llm') {
       // 直接使用 LLM
-      response = await this.chatWithLLM(sessionId, userMessage, role, onChunk);
+      response = await this.chatWithLLM(sessionId, userMessage, role, onChunk, options);
     } else if (decision.type === 'tool') {
       // 使用工具
       const toolResult = await this.executeTool(
@@ -67,7 +68,7 @@ export class AgentService {
       // both: 先工具后 LLM
       const toolResult = await this.executeTool(decision.toolName!, userMessage);
       const prompt = `用户问题: ${userMessage}\n\n工具分析结果:\n${toolResult}\n\n请根据工具分析结果给出完整的回答和建议。`;
-      response = await this.chatWithLLM(sessionId, prompt, role, onChunk);
+      response = await this.chatWithLLM(sessionId, prompt, role, onChunk, options);
     }
 
     return response;
@@ -81,6 +82,7 @@ export class AgentService {
     userMessage: string,
     role?: string,
     onChunk?: (chunk: string) => void,
+    options?: ChatOptions
   ): Promise<string> {
     // 构建消息列表
     const roleId = role || 'frontend';
@@ -102,6 +104,7 @@ export class AgentService {
             onChunk(chunk.delta);
           }
         },
+        options
       );
       return '[STREAM_COMPLETE]';
     }

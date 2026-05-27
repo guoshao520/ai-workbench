@@ -23,6 +23,7 @@ interface ChatRequestDto {
   sessionId?: string;
   role?: string;
   template?: string;
+  model?: string;
 }
 
 @Controller('api')
@@ -43,7 +44,7 @@ export class ChatController {
     @Body() body: ChatRequestDto,
     @Res() res: Response,
   ) {
-    const { messages, sessionId, role, template } = body;
+    const { messages, sessionId, role, template, model } = body;
 
     if (!messages || messages.length === 0) {
       return res.status(400).json({ error: 'Messages are required' });
@@ -75,6 +76,7 @@ export class ChatController {
           const escaped = chunk.replace(/\n/g, '\u001F')
           res.write(`data: ${escaped}\n\n`)
         },
+        { model } 
       );
 
       // 发送完成信号

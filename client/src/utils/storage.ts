@@ -4,6 +4,7 @@ import { Session, Message } from '../types'
 
 const SESSIONS_KEY = 'ai_workbench_sessions'
 const CURRENT_SESSION_KEY = 'ai_workbench_current_session'
+const STORAGE_KEY = 'last_selected_model';
 
 // 获取所有会话
 export function getStoredSessions(): Session[] {
@@ -103,4 +104,14 @@ export function updateAssistantMessage(
 // 删除会话
 export function removeSession(sessions: Session[], sessionId: string): Session[] {
   return sessions.filter(session => session.id !== sessionId)
+}
+
+// 获取模型名称
+export function getLastSelectedModel(): string | null {
+  return localStorage.getItem(STORAGE_KEY) || 'deepseek-ai/DeepSeek-V4-Pro';
+}
+
+// 设置模型名称
+export function setLastSelectedModel(modelType: string): void {
+  localStorage.setItem(STORAGE_KEY, modelType);
 }
