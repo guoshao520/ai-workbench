@@ -21,8 +21,9 @@ export async function* streamChat(
       role: options?.role,
       template: options?.template,
       sessionId: options?.sessionId,
-      model: options?.model,
-    })
+      model: options?.model
+    }),
+    signal: options.signal
   })
 
   if (!response.ok) {

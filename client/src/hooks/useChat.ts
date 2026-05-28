@@ -14,6 +14,7 @@ export function useChat() {
   const [error, setError] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const callbacksRef = useRef<SessionCallbacks | null>(null)
+  const isAbortedRef = useRef(false)
 
   // 外部注入 session 回调
   const setCallbacks = useCallback((callbacks: SessionCallbacks) => {
@@ -26,6 +27,8 @@ export function useChat() {
     options?: { role?: string; template?: string, model?: string }
   ) => {
     if (!content.trim() || isLoading) return
+
+    isAbortedRef.current = false
 
     const userMessage: Message = {
       id: generateId(),
@@ -60,7 +63,10 @@ export function useChat() {
         role: options?.role,
         template: options?.template,
         model: options?.model,
+        signal: abortControllerRef.current.signal
       })) {
+        if (isAbortedRef.current) break
+
         fullContent += chunk
         setMessages(prev => prev.map(msg =>
           msg.id === assistantMessage.id
@@ -89,6 +95,7 @@ export function useChat() {
 
   // 取消请求
   const cancelRequest = useCallback(() => {
+    isAbortedRef.current = true
     abortControllerRef.current?.abort()
     setIsLoading(false)
   }, [])

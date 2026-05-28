@@ -49,4 +49,5 @@ export interface RequestOptions {
   template?: string
   sessionId?: string,
   model?: string,
+  signal?: any
 }
