@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react'
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import xml from 'highlight.js/lib/languages/xml'
@@ -48,46 +48,81 @@ const escapeHtml = (str: string): string => {
     .replace(/'/g, '&#039;')
 }
 
+// 高亮函数：支持流式实时高亮
+const highlightCode = (code: string, language: string): string => {
+  if (!code) return ''
+  try {
+    const validLang = hljs.getLanguage(language) ? language : 'plaintext'
+    return hljs.highlight(code, { language: validLang, ignoreIllegals: true }).value
+  } catch {
+    return escapeHtml(code)
+  }
+}
+
 const CodeBlock: React.FC<{
   code: string
   language: string
   isStreamingCode?: boolean
 }> = ({ code, language, isStreamingCode }) => {
   const [copied, setCopied] = useState(false)
+  const [highlightedHtml, setHighlightedHtml] = useState('')
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevCodeRef = useRef('')
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // 流式时只做一次最终高亮：内容不变就不重算
-  const highlightedCode = useMemo(() => {
-    if (!code) return ''
-    if (isStreamingCode) {
-      return escapeHtml(code)
+  // 流式实时高亮：使用防抖优化
+  const performHighlight = useCallback((codeToHighlight: string, lang: string) => {
+    if (highlightTimerRef.current) {
+      clearTimeout(highlightTimerRef.current)
     }
-    try {
-      const validLang = hljs.getLanguage(language) ? language : 'plaintext'
-      try {
-        return hljs.highlight(code, { language: validLang }).value
-      } catch {
-        return hljs.highlight(code, { language: 'plaintext' }).value
+    
+    // 流式时使用更短的延迟，保证实时性
+    const delay = isStreamingCode ? 30 : 0
+    
+    highlightTimerRef.current = setTimeout(() => {
+      const result = highlightCode(codeToHighlight, lang)
+      setHighlightedHtml(result)
+      prevCodeRef.current = codeToHighlight
+    }, delay)
+  }, [isStreamingCode])
+
+  useEffect(() => {
+    // 代码变化时触发高亮
+    if (code !== prevCodeRef.current) {
+      performHighlight(code, language)
+    }
+    
+    return () => {
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current)
       }
-    } catch {
-      return escapeHtml(code)
     }
-  }, [code, language, isStreamingCode])
+  }, [code, language, performHighlight])
+
+  // 初始化高亮
+  useEffect(() => {
+    setHighlightedHtml(highlightCode(code, language))
+    prevCodeRef.current = code
+  }, [])
 
   return (
     <div className="code-block-container">
       <div className="code-header">
         <span className="code-lang">{language}</span>
         <button className="copy-btn" onClick={handleCopy}>
-          {copied ? '✅ 已复制' : '📋 复制'}
+          {copied ? '✔️ 已复制' : '📋 复制'}
         </button>
       </div>
       <pre className="code-content">
-        <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+        <code 
+          className={`hljs ${isStreamingCode ? 'streaming' : ''}`} 
+          dangerouslySetInnerHTML={{ __html: highlightedHtml }} 
+        />
       </pre>
     </div>
   )
@@ -154,7 +189,6 @@ const parseContent = (content: string, isStreaming: boolean) => {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming = false }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // 直接用 message.content，SSE 流式本身就是逐步的
   const content = message.content || ''
   const parts = useMemo(() => parseContent(content, isStreaming), [content, isStreaming])
   const isUser = message.role === 'user'

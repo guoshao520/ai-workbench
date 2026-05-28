@@ -7,10 +7,17 @@ export const mockPromptData = [
     prompts: [
       {
         id: '101',
-        title: '生成 React 组件',
-        desc: '快速生成一个标准 React 函数组件',
+        title: '生成组件',
+        desc: '快速生成一个标准组件',
         description: '请生成一个标准的 React 函数组件，包含基础结构。',
-        speechTechnique: '请生成一个标准的 React 函数组件，包含基础结构。',
+        speechTechnique: 
+        `用【Vue3/React】+【TS】+【Tailwind CSS/Element Plus/Ant Design】生成【组件名称，如：登录表单/商品卡片/分页组件】，要求：
+          1. 包含【具体功能，如：表单校验/分页切换/hover 动效】；
+          2. 支持【自定义属性，如：自定义颜色/尺寸/回调函数】；
+          3. 带完整 TS 类型定义、详细注释，符合 ESLint 规范；
+          4. 适配移动端响应式，兼容主流浏览器；
+          5. 输出完整可运行代码，复制就能直接导入项目。
+        `
       },
       {
         id: '102',

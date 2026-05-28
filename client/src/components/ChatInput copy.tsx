@@ -130,7 +130,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder="输入消息，Enter 发送，Ctrl+Enter 换行..."
           disabled={disabled || isLoading}
-          rows={5}
+          rows={3}
         />
         <div className="chat-input-actions">
           {isLoading ? (

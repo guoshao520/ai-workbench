@@ -76,8 +76,6 @@ export class Provider implements LLMProvider {
       const systemMessage = this.buildSystemMessage(options?.role);
       const fullMessages = systemMessage ? [systemMessage, ...messages] : messages;
 
-      console.log("fullMessages >>>", fullMessages)
-
       const response = await this.httpClient.post(
         '/chat/completions',
         {
