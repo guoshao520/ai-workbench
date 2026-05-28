@@ -656,6 +656,11 @@ body {
   border-color: var(--accent);
 }
 
+.role-item.active, .template-item.active {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
 .role-icon, .template-icon {
   font-size: 14px;
 }

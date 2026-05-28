@@ -7,6 +7,8 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ChatService } from './chat.service';
@@ -118,5 +120,38 @@ export class ChatController {
       success: true,
       ...result,
     };
+  }
+
+  /**
+   * GET /api/realList - 获取配置列表
+   */
+  @Get('realList')
+  @HttpCode(HttpStatus.OK)
+  async realListhh(@Query('name') name?: string) {
+    try {
+      const response = await fetch('https://guoshao.nat100.top/dynamic/api/v1/generaldata/realList', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: name || '分类列表' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return {
+        success: true,
+        data,
+      };
+    } catch (error) {
+      this.logger.error('realListhh error', error.stack, 'ChatController');
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
   }
 }

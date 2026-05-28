@@ -8,12 +8,38 @@ import { PromptPanel } from './components/PromptPanel'
 import { DraggableButton } from './components/DraggableButton'
 import { useChat } from './hooks/useChat'
 import { useSessions } from './hooks/useSessions'
+import { getLastSelectedModel, setLastSelectedModel, getRoleName, setRoleName, getToolName, setToolName } from './utils/storage'
+import { MODEL_OPTIONS, ROLES, TOOLS } from './constants'
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [toolPanelCollapsed, setToolPanelCollapsed] = useState(true)
   const [promptPanelVisible, setPromptPanelVisible] = useState(false)
   const pendingPromptRef = useRef<string | null>(null)
+
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const saved = getLastSelectedModel()
+    if (saved && MODEL_OPTIONS.some(opt => opt.value === saved)) {
+      return saved
+    }
+    return MODEL_OPTIONS[0].value
+  })
+
+  const [selectedRole, setSelectedRole] = useState(() => {
+    const saved = getRoleName()
+    if (saved && ROLES.some(opt => opt.id === saved)) {
+      return saved
+    }
+    return ROLES[0].id
+  })
+
+  const [selectedTool, setSelectedTool] = useState(() => {
+    const saved = getToolName()
+    if (saved && TOOLS.some(opt => opt.id === saved)) {
+      return saved
+    }
+    return TOOLS[0].id
+  })
 
   const {
     sessions, currentSession, createSession, switchSession,
@@ -42,14 +68,16 @@ function App() {
   }, [currentSession?.id, loadMessages])
 
   const handleSendMessage = async (content: string) => {
+    const modelType = getLastSelectedModel()
+    const roleName = getRoleName()
+
     if (!currentSession) {
       createSession()
       await new Promise(r => setTimeout(r, 0))
     }
     const chatConfig = {
-      model: 'deepseek-chat',
-      temperature: 0.7,
-      maxTokens: 4096,
+      model: modelType,
+      role: roleName
     }
 
     await sendMessage(content, chatConfig)
@@ -91,15 +119,33 @@ function App() {
         <main className="main-content">
           <ChatArea messages={messages} isLoading={isLoading} error={error} />
           <ChatInput
-            onSend={handleSendMessage}
             isLoading={isLoading}
-            onCancel={cancelRequest}
             pendingPrompt={pendingPromptRef.current}
+            onSend={handleSendMessage}
+            onCancel={cancelRequest}
             onPromptConsumed={() => { pendingPromptRef.current = null }}
+            selectedModel={selectedModel}
+            onModelChange={(val) => {
+              setSelectedModel(val)
+              setLastSelectedModel(val)
+            }}
           />
         </main>
 
-        {!toolPanelCollapsed && <ToolPanel />}
+        {!toolPanelCollapsed &&
+          <ToolPanel
+            selectedRole={selectedRole}
+            selectedTool={selectedTool}
+            onSelectRole={(val) => {
+              setSelectedRole(val)
+              setRoleName(val)
+              handleNewChat()
+            }}
+            onSelectTool={(val) => {
+              setSelectedTool(val)
+              setToolName(val)
+            }}
+          />}
       </div>
 
       {/* 侧边栏切换 */}

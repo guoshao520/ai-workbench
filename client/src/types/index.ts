@@ -48,5 +48,5 @@ export interface RequestOptions {
   role?: string
   template?: string
   sessionId?: string,
-  model?: string
+  model?: string,
 }

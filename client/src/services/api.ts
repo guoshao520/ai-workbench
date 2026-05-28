@@ -151,3 +151,12 @@ export async function getSessionMessages(sessionId: string): Promise<Message[]> 
 }
 
 export { generateId }
+
+// 获取真实列表
+export async function getRealList(name: string): Promise<any[]> {
+  const response = await fetch(`${API_BASE}/realList?name=${name}`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return response.json()
+}

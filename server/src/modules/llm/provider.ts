@@ -47,8 +47,8 @@ export class Provider implements LLMProvider {
       const response = await this.httpClient.post('/chat/completions', {
         model: options?.model || this.defaultModel,
         messages: fullMessages,
-        temperature: options?.temperature ?? 0.1,
-        max_tokens: options?.max_tokens ?? 8192,
+        temperature: options?.temperature ?? 0.5,
+        max_tokens: options?.max_tokens ?? 4096,
         stream: false,
       });
 
@@ -73,16 +73,18 @@ export class Provider implements LLMProvider {
   ): Promise<void> {
     try {
       // TODO: 根据选择的角色添加系统提示
-      const systemMessage = this.buildSystemMessage();
+      const systemMessage = this.buildSystemMessage(options?.role);
       const fullMessages = systemMessage ? [systemMessage, ...messages] : messages;
+
+      console.log("fullMessages >>>", fullMessages)
 
       const response = await this.httpClient.post(
         '/chat/completions',
         {
           model: options?.model || this.defaultModel,
           messages: fullMessages,
-          temperature: options?.temperature ?? 0.1,
-          max_tokens: options?.max_tokens ?? 8192,
+          temperature: options?.temperature ?? 0.5,
+          max_tokens: options?.max_tokens ?? 4096,
           stream: true,
         },
         {
@@ -136,18 +138,18 @@ export class Provider implements LLMProvider {
    * 构建系统消息
    * TODO: 根据用户选择的角色动态构建
    */
-  private buildSystemMessage(): Message | null {
+  private buildSystemMessage(role?: string): Message | null {
     // TODO: 从Session或请求中获取用户选择的角色
-    const role = 'frontend'; // 默认前端工程师
+    const nRole = role || 'frontend'; // 默认前端工程师
     
     const ROLES = {
       frontend: '你是一个资深前端开发工程师，擅长React、Vue、TypeScript、HTML、CSS等前端技术栈。请用专业、易懂的方式回答问题。',
-      backend: '你是一个资深后端开发工程师，擅长Node.js、Python、Java等后端技术。请用专业、易懂的方式回答问题。',
+      backend: '你是一个资深后端开发工程师，擅长Java、Python等后端技术。请用专业、易懂的方式回答问题。',
       fullstack: '你是一个全栈开发工程师，精通前端和后端技术。请用专业、易懂的方式回答问题。',
       devops: '你是一个DevOps工程师，擅长CI/CD、容器化、云原生等技术。请用专业、易懂的方式回答问题。',
     };
 
-    const systemPrompt = ROLES[role as keyof typeof ROLES] || ROLES.frontend;
+    const systemPrompt = ROLES[nRole as keyof typeof ROLES] || ROLES.frontend;
     
     return {
       role: 'system',

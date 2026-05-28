@@ -6,6 +6,7 @@ export interface Message {
 
 export interface ChatOptions {
   model?: string;
+  role?: string;
   temperature?: number;
   max_tokens?: number;
   stream?: boolean;

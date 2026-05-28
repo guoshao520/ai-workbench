@@ -1,10 +1,13 @@
 // 本地存储工具
-
+import { MODEL_OPTIONS, ROLES, TOOLS } from '../constants'
 import { Session, Message } from '../types'
 
 const SESSIONS_KEY = 'ai_workbench_sessions'
 const CURRENT_SESSION_KEY = 'ai_workbench_current_session'
-const STORAGE_KEY = 'last_selected_model';
+
+const MODEL_STORAGE_KEY = 'last_selected_model';
+const ROLE_STORAGE_KEY = 'role_name';
+const TOOL_STORAGE_KEY = 'tool_name';
 
 // 获取所有会话
 export function getStoredSessions(): Session[] {
@@ -106,12 +109,36 @@ export function removeSession(sessions: Session[], sessionId: string): Session[]
   return sessions.filter(session => session.id !== sessionId)
 }
 
+/**
+ * -----个人选项相关配置-----
+ */
+
 // 获取模型名称
 export function getLastSelectedModel(): string | null {
-  return localStorage.getItem(STORAGE_KEY) || 'deepseek-ai/DeepSeek-V4-Pro';
+  return localStorage.getItem(MODEL_STORAGE_KEY) || MODEL_OPTIONS[0]?.value;
 }
 
 // 设置模型名称
 export function setLastSelectedModel(modelType: string): void {
-  localStorage.setItem(STORAGE_KEY, modelType);
+  localStorage.setItem(MODEL_STORAGE_KEY, modelType);
+}
+
+// 获取角色名称
+export function getRoleName(): string | null {
+  return localStorage.getItem(ROLE_STORAGE_KEY) || ROLES[0]?.id;
+}
+
+// 设置角色名称
+export function setRoleName(name: string): void {
+  localStorage.setItem(ROLE_STORAGE_KEY, name);
+}
+
+// 获取工具名称
+export function getToolName(): string | null {
+  return localStorage.getItem(TOOL_STORAGE_KEY) || TOOLS[0]?.id;
+}
+
+// 设置工具名称
+export function setToolName(name: string): void {
+  localStorage.setItem(TOOL_STORAGE_KEY, name);
 }

@@ -104,7 +104,10 @@ export class AgentService {
             onChunk(chunk.delta);
           }
         },
-        options
+        {
+          ...options,
+          role: roleId
+        }
       );
       return '[STREAM_COMPLETE]';
     }
