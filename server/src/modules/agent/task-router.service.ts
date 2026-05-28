@@ -179,7 +179,7 @@ export class TaskRouterService {
       default:
         return {
           type: 'llm',
-          confidence: 0.5,
+          confidence: 0.9,
           reason: '通用对话，使用 LLM 处理',
         };
     }
