@@ -17,11 +17,10 @@ export class Provider implements LLMProvider {
   private readonly defaultModel: string;
 
   constructor(private readonly configService: ConfigService) {
-    const models = this.configService.get<any[]>('models') || [];
     const apiKey = this.configService.get<string>('llm.apiKey');
     const baseUrl = this.configService.get<string>('llm.baseUrl');
 
-    this.defaultModel = models[0]?.model;
+    this.defaultModel = this.configService.get<string>('llm.model');
     this.httpClient = axios.create({
       baseURL: baseUrl,
       headers: {
@@ -143,8 +142,7 @@ export class Provider implements LLMProvider {
     const ROLES = {
       frontend: '你是一个资深前端开发工程师，擅长React、Vue、TypeScript、HTML、CSS等前端技术栈。请用专业、易懂的方式回答问题。',
       backend: '你是一个资深后端开发工程师，擅长Java、Python等后端技术。请用专业、易懂的方式回答问题。',
-      fullstack: '你是一个全栈开发工程师，精通前端和后端技术。请用专业、易懂的方式回答问题。',
-      devops: '你是一个DevOps工程师，擅长CI/CD、容器化、云原生等技术。请用专业、易懂的方式回答问题。',
+      fullstack: '你是一个全栈开发工程师，精通前端和后端技术。请用专业、易懂的方式回答问题。'
     };
 
     const systemPrompt = ROLES[nRole as keyof typeof ROLES] || ROLES.frontend;

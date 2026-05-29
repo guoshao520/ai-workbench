@@ -134,7 +134,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 20px;
+  padding: 0 20px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   z-index: 100;
@@ -454,7 +454,7 @@ body {
 
 /* 输入区域 */
 .chat-input-container {
-  padding: 16px 20px;
+  padding: 12px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
 }
@@ -1183,8 +1183,8 @@ body {
 
 /* 侧边栏 */
 .sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: 260px;
+  min-width: 260px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   display: flex;
@@ -1211,7 +1211,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 6px 10px;
   background: var(--accent);
   color: #fff;
   border: none;
@@ -1273,7 +1273,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 6px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition);

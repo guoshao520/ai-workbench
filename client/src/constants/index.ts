@@ -1,8 +1,10 @@
 // 模型列表
 export const MODEL_OPTIONS = [
+  { value: 'Pro/zai-org/GLM-5.1', label: 'GLM-5.1' },
+  { value: 'Pro/zai-org/GLM-5', label: 'GLM-5' },
   { value: 'deepseek-ai/DeepSeek-V4-Pro', label: 'DeepSeek V4 Pro' },
-  { value: 'Pro/zai-org/GLM-4.7', label: 'GLM-4.7 🚀' },
-  { value: 'Pro/zai-org/GLM-5', label: 'GLM-5 🔥' },
+  { value: 'deepseek-ai/DeepSeek-V4-Flash', label: 'DeepSeek V4 Flash' },
+  { value: 'Pro/moonshotai/Kimi-K2.6', label: 'Kimi K2.6' }
 ]
 
 // 角色列表

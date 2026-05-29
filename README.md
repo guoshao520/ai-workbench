@@ -139,8 +139,7 @@ cd server && npm run start
 |------|------|
 | `frontend` | 前端工程师 - React/Vue/TypeScript |
 | `backend` | 后端工程师 - Node.js/Python/Java |
-| `fullstack` | 全栈工程师 - 前后端全链路 |
-| `devops` | DevOps工程师 - CI/CD/容器化 |
+| `fullstack` | 全栈工程师 - 前后端全链路
 
 ## 开发指南
 
