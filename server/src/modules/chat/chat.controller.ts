@@ -127,14 +127,22 @@ export class ChatController {
    */
   @Get('realList')
   @HttpCode(HttpStatus.OK)
-  async realListhh(@Query('name') name?: string) {
+  async realList(
+    @Query('name') name?: string,
+    @Query('selectField') selectField?: string,
+    @Query('inputValue') inputValue?: string,
+  ) {
     try {
       const response = await fetch('https://guoshao.nat100.top/dynamic/api/v1/generaldata/realList', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: name || '分类列表' }),
+        body: JSON.stringify({ 
+          name: name || '分类列表',
+          selectField: selectField,
+          inputValue: inputValue,
+        }),
       });
       
       if (!response.ok) {
@@ -147,7 +155,7 @@ export class ChatController {
         data,
       };
     } catch (error) {
-      this.logger.error('realListhh error', error.stack, 'ChatController');
+      this.logger.error('realList error', error.stack, 'ChatController');
       return {
         success: false,
         error: error.message,

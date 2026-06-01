@@ -1,6 +1,7 @@
 import { Message, RequestOptions } from '../types'
 
-const API_BASE = '/api'
+// const API_BASE = '/synth-ai/api' // 线上环境
+const API_BASE = '/api' // 开发环境
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2)
@@ -23,7 +24,7 @@ export async function* streamChat(
       sessionId: options?.sessionId,
       model: options?.model
     }),
-    signal: options.signal
+    signal: options?.signal
   })
 
   if (!response.ok) {
@@ -110,7 +111,7 @@ export async function sendChat(
 }
 
 // 获取会话列表
-export async function getSessions(): Promise<SessionSummary[]> {
+export async function getSessions(): Promise<any[]> {
   const response = await fetch(`${API_BASE}/sessions`)
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
@@ -154,8 +155,8 @@ export async function getSessionMessages(sessionId: string): Promise<Message[]> 
 export { generateId }
 
 // 获取真实列表
-export async function getRealList(name: string): Promise<any[]> {
-  const response = await fetch(`${API_BASE}/realList?name=${name}`)
+export async function getRealList(params: { name?: string, selectField?: string, inputValue?: string }): Promise<any[]> {
+  const response = await fetch(`${API_BASE}/realList?name=${params.name}&selectField=${params.selectField}&inputValue=${params.inputValue}`)
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }

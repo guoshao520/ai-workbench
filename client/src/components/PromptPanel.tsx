@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { getRealList } from '../services/api'
 import { mockPromptData } from '../utils/mockPrompt'
 
+import { getRoleName } from '../utils/storage'
+import { ROLES } from '../constants'
+
 interface PromptPanelProps {
   visible: boolean
   onClose: () => void
@@ -18,6 +21,7 @@ interface Prompt {
 
 interface PromptCategory {
   id: string
+  title: string
   name: string
   icon: string
   prompts: Prompt[]
@@ -48,8 +52,18 @@ export const PromptPanel: React.FC<PromptPanelProps> = ({ visible, onClose, onIn
       return
     }
 
-    getRealList('分类列表')
-      .then(({ data }) => {
+    const roleId = getRoleName()
+    if (!roleId) return
+    const roleName = ROLES.find(r => r.id === roleId)?.name || ''
+
+    const params = {
+      name: "分类列表",
+      selectField: "data11",
+      inputValue: roleName
+    }
+
+    getRealList(params)
+      .then(({ data } : any) => {
         console.log('分类列表:', data.data)
         const list = data.data || []
         if (list.length > 0) {
@@ -70,7 +84,7 @@ export const PromptPanel: React.FC<PromptPanelProps> = ({ visible, onClose, onIn
     if (!visible || !activeCategory) return
     const currentCategory = promptCategories.find(c => c.id === activeCategory)
     if (!currentCategory) return
-    
+
     setLoadingPrompts(true)
 
     if (USE_MOCK) {
@@ -78,9 +92,19 @@ export const PromptPanel: React.FC<PromptPanelProps> = ({ visible, onClose, onIn
       setLoadingPrompts(false)
       return
     }
-    
-    getRealList(currentCategory.title)
-      .then(({ data }) => {
+
+    const roleId = getRoleName()
+    if (!roleId) return
+    const roleName = ROLES.find(r => r.id === roleId)?.name || ''
+
+    const params = {
+      name: currentCategory?.title,
+      selectField: "data11",
+      inputValue: roleName
+    }
+
+    getRealList(params)
+      .then(({ data } : any) => {
         console.log('分类 prompts:', data.data)
         setCategoryPrompts(data.data || [])
       })
@@ -118,15 +142,15 @@ export const PromptPanel: React.FC<PromptPanelProps> = ({ visible, onClose, onIn
 
   const allFiltered = searchText
     ? promptCategories.flatMap(cat =>
-        cat.prompts
-          .filter(p =>
-            p.title.toLowerCase().includes(searchText.toLowerCase()) ||
-            p.desc.toLowerCase().includes(searchText.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchText.toLowerCase()) ||
-            p.speechTechnique.toLowerCase().includes(searchText.toLowerCase())
-          )
-          .map(p => ({ ...p, categoryName: cat.name, categoryIcon: cat.icon }))
-      )
+      cat.prompts
+        .filter(p =>
+          p.title.toLowerCase().includes(searchText.toLowerCase()) ||
+          p.desc.toLowerCase().includes(searchText.toLowerCase()) ||
+          p.description.toLowerCase().includes(searchText.toLowerCase()) ||
+          p.speechTechnique.toLowerCase().includes(searchText.toLowerCase())
+        )
+        .map(p => ({ ...p, categoryName: cat.name, categoryIcon: cat.icon }))
+    )
     : []
 
   return (

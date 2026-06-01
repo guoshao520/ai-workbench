@@ -216,7 +216,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming =
         <div className="message-bubble">
           {parts.map((item, idx) =>
             item.type === 'text' ? (
-              <span key={idx} dangerouslySetInnerHTML={{ __html: item.html }} />
+              <span key={idx} dangerouslySetInnerHTML={{ __html: item.html ?? '' }} />
             ) : (
               <CodeBlock
                 key={idx}

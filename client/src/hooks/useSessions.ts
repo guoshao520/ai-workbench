@@ -11,8 +11,7 @@ import {
   createNewSession,
   addMessageToSession,
   updateAssistantMessage,
-  removeSession,
-  generateId
+  removeSession
 } from '../utils/storage'
 
 export function useSessions() {

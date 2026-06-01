@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 import { ChatArea } from './components/ChatArea'
@@ -47,7 +47,7 @@ function App() {
   } = useSessions()
 
   const {
-    messages, isLoading, error, sendMessage, cancelRequest,
+    messages, isLoading, sendMessage, cancelRequest,
     loadMessages, setCallbacks
   } = useChat()
 
@@ -80,7 +80,7 @@ function App() {
       role: roleName
     }
 
-    await sendMessage(content, chatConfig)
+    await sendMessage(content, chatConfig as any)
   }
 
   const withCancel = <T extends (...args: any[]) => any>(fn: T) => {
@@ -117,7 +117,7 @@ function App() {
         )}
 
         <main className="main-content">
-          <ChatArea messages={messages} isLoading={isLoading} error={error} />
+          <ChatArea messages={messages} isLoading={isLoading} />
           <ChatInput
             isLoading={isLoading}
             pendingPrompt={pendingPromptRef.current}
