@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
       <div className="header-center">
-        <span className="header-subtitle">郭少AI提效工作台</span>
+        <span className="header-subtitle">AI 研发提效平台</span>
       </div>
       <div className="header-right">
         <button className="header-btn" title="设置">
